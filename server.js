@@ -27,7 +27,7 @@ if (!fs.existsSync(DATA_DIR)) {
 
 // 🛡️ FILTRO DE SEGURIDAD PANEL ADMIN
 app.get('/admin.html', (req, res, next) => {
-    const claveCorrecta = 'Staff2026'; // <-- CAMBIA TU CONTRASEÑA AQUÍ
+    const claveCorrecta = 'TuClaveSecreta123'; // <-- CAMBIA TU CONTRASEÑA AQUÍ
     const claveUsuario = req.query.pass;
 
     if (claveUsuario === claveCorrecta) {
