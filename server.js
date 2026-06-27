@@ -9,12 +9,14 @@ const app = express();
 const httpServer = createServer(app);
 const io = new Server(httpServer);
 
+// 🌐 CONFIGURACIÓN DEL PUERTO AUTOMÁTICO PARA RAILWAY
 const PORT = process.env.PORT || 8080;
 
-// 🔍 ENCONTRAR LA RUTA REAL DE LAS CARPETAS
+// 🔍 ENCONTRAR LA RUTA REAL (RAÍZ PRINCIPAL)
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// Las carpetas de datos se crean de forma independiente
 const DATA_DIR = path.join(__dirname, 'data'); 
 const DATA_FILE = path.join(DATA_DIR, 'tickets.json');
 const RATING_FILE = path.join(DATA_DIR, 'calificaciones.json');
@@ -25,38 +27,27 @@ if (!fs.existsSync(DATA_DIR)) {
     fs.mkdirSync(DATA_DIR, { recursive: true });
 }
 
-// 🛡️ FILTRO DE SEGURIDAD PANEL ADMIN
+// 🛡️ FILTRO DE SEGURIDAD PANEL ADMIN CON TU CONTRASEÑA "Staff2026"
 app.get('/admin.html', (req, res, next) => {
-    const claveCorrecta = 'TuClaveSecreta123'; // <-- CAMBIA TU CONTRASEÑA AQUÍ
+    const claveCorrecta = 'Staff2026'; 
     const claveUsuario = req.query.pass;
 
     if (claveUsuario === claveCorrecta) {
         next();
     } else {
-        res.status(403).send('<h1 style="color:#ff4d4d; text-align:center; margin-top:50px; font-family:sans-serif;">❌ Acceso Denegado.</h1>');
+        res.status(403).send('<h1 style="color:#ff4d4d; text-align:center; margin-top:50px; font-family:sans-serif;">❌ Acceso Denegado: Contraseña incorrecta.</h1>');
     }
 });
 
-// 🖥️ CONTROL DE RUTA "PUBLIC" ULTRA SEGURO
-// Intenta buscar la carpeta 'public' en la raíz, y si no, en el directorio actual
-let PUBLIC_PATH = path.join(process.cwd(), 'public');
-if (!fs.existsSync(PUBLIC_PATH)) {
-    PUBLIC_PATH = path.join(__dirname, 'public');
-}
+// 🖥️ SERVIR ARCHIVOS DIRECTAMENTE DESDE LA RAÍZ (YA QUE NO HAY CARPETA PUBLIC)
+app.use(express.static(__dirname));
 
-app.use(express.static(PUBLIC_PATH));
-
-// Forzar la entrega del archivo index.html en la raíz
+// Forzar la entrega de index.html cuando entren al link limpio
 app.get('/', (req, res) => {
-    const indexPath = path.join(PUBLIC_PATH, 'index.html');
-    if (fs.existsSync(indexPath)) {
-        res.sendFile(indexPath);
-    } else {
-        res.status(404).send(`❌ Error del Servidor: No se encontró el archivo index.html en la ruta: ${PUBLIC_PATH}. Revisa tus carpetas en GitHub.`);
-    }
+    res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-// Funciones de datos
+// Funciones de base de datos seguras
 const readTickets = () => {
     if (!fs.existsSync(DATA_FILE) || fs.readFileSync(DATA_FILE, 'utf-8').trim() === '') {
         fs.writeFileSync(DATA_FILE, '[]');
@@ -77,7 +68,7 @@ const saveRating = (ratingData) => {
 
 app.get('/api/tickets', (req, res) => res.json(readTickets()));
 
-// ⚡ WEBSOCKETS (SOCKET.IO)
+// ⚡ LÓGICA DE WEBSOCKETS EN TIEMPO REAL (SOCKET.IO)
 io.on('connection', (socket) => {
     socket.on('join_ticket', (ticketId) => socket.join(ticketId));
 
@@ -172,6 +163,7 @@ io.on('connection', (socket) => {
     });
 });
 
+// 🔥 ENTRADA INTERNACIONAL GLOBAL
 httpServer.listen(PORT, '0.0.0.0', () => {
-    console.log(`🚀 ¡SISTEMA EN VIVO! Puerto: ${PORT}`);
+    console.log(`🚀 ¡SISTEMA EN VIVO! Corriendo exitosamente en el puerto ${PORT}`);
 });
