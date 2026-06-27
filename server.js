@@ -9,23 +9,23 @@ const app = express();
 const httpServer = createServer(app);
 const io = new Server(httpServer);
 
-// 🌐 CONFIGURACIÓN DEL PUERTO AUTOMÁTICO PARA RAILWAY (USA EL QUE CONFIGURASTE)
 const PORT = process.env.PORT || 8080;
 
-// 🔄 ENRUTAMIENTO DINÁMICO ABSOLUTO CORREGIDO
-const __dirname = path.resolve();
+// 🔍 ENCONTRAR LA RUTA REAL DE LAS CARPETAS
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 const DATA_DIR = path.join(__dirname, 'data'); 
 const DATA_FILE = path.join(DATA_DIR, 'tickets.json');
 const RATING_FILE = path.join(DATA_DIR, 'calificaciones.json');
 
 app.use(express.json());
 
-// Asegurar que la carpeta data exista
 if (!fs.existsSync(DATA_DIR)) {
     fs.mkdirSync(DATA_DIR, { recursive: true });
 }
 
-// 🛡️ FILTRO DE SEGURIDAD PARA EL PANEL ADMIN
+// 🛡️ FILTRO DE SEGURIDAD PANEL ADMIN
 app.get('/admin.html', (req, res, next) => {
     const claveCorrecta = 'Staff2026'; // <-- CAMBIA TU CONTRASEÑA AQUÍ
     const claveUsuario = req.query.pass;
@@ -33,20 +33,30 @@ app.get('/admin.html', (req, res, next) => {
     if (claveUsuario === claveCorrecta) {
         next();
     } else {
-        res.status(403).send('<h1 style="color:#ff4d4d; text-align:center; margin-top:50px; font-family:sans-serif;">❌ Acceso Denegado: No tienes permisos para entrar aquí.</h1>');
+        res.status(403).send('<h1 style="color:#ff4d4d; text-align:center; margin-top:50px; font-family:sans-serif;">❌ Acceso Denegado.</h1>');
     }
 });
 
-// 🖥️ FORZAR LA RUTA ABSOLUTA DE LA CARPETA PUBLIC
-const PUBLIC_PATH = path.join(__dirname, 'public');
+// 🖥️ CONTROL DE RUTA "PUBLIC" ULTRA SEGURO
+// Intenta buscar la carpeta 'public' en la raíz, y si no, en el directorio actual
+let PUBLIC_PATH = path.join(process.cwd(), 'public');
+if (!fs.existsSync(PUBLIC_PATH)) {
+    PUBLIC_PATH = path.join(__dirname, 'public');
+}
+
 app.use(express.static(PUBLIC_PATH));
 
-// Redirección manual garantizada para la raíz del enlace
+// Forzar la entrega del archivo index.html en la raíz
 app.get('/', (req, res) => {
-    res.sendFile(path.join(PUBLIC_PATH, 'index.html'));
+    const indexPath = path.join(PUBLIC_PATH, 'index.html');
+    if (fs.existsSync(indexPath)) {
+        res.sendFile(indexPath);
+    } else {
+        res.status(404).send(`❌ Error del Servidor: No se encontró el archivo index.html en la ruta: ${PUBLIC_PATH}. Revisa tus carpetas en GitHub.`);
+    }
 });
 
-// Funciones de lectura y escritura seguras
+// Funciones de datos
 const readTickets = () => {
     if (!fs.existsSync(DATA_FILE) || fs.readFileSync(DATA_FILE, 'utf-8').trim() === '') {
         fs.writeFileSync(DATA_FILE, '[]');
@@ -61,23 +71,15 @@ const saveRating = (ratingData) => {
         fs.writeFileSync(RATING_FILE, '[]');
     }
     const ratings = JSON.parse(fs.readFileSync(RATING_FILE, 'utf-8'));
-    ratings.push({
-        ...ratingData,
-        fecha: new Date().toLocaleString()
-    });
+    ratings.push({ ...ratingData, fecha: new Date().toLocaleString() });
     fs.writeFileSync(RATING_FILE, JSON.stringify(ratings, null, 2));
 };
 
-// API Endpoint para cargar los tickets activos
 app.get('/api/tickets', (req, res) => res.json(readTickets()));
 
-// ⚡ SISTEMA DE WEBSOCKETS EN TIEMPO REAL (SOCKET.IO)
+// ⚡ WEBSOCKETS (SOCKET.IO)
 io.on('connection', (socket) => {
-    console.log('⚡ Usuario conectado mediante WebSockets:', socket.id);
-
-    socket.on('join_ticket', (ticketId) => {
-        socket.join(ticketId);
-    });
+    socket.on('join_ticket', (ticketId) => socket.join(ticketId));
 
     socket.on('create_ticket', (datosTicket) => {
         const tickets = readTickets();
@@ -93,7 +95,6 @@ io.on('connection', (socket) => {
         };
         tickets.push(newTicket);
         writeTickets(tickets);
-
         io.emit('ticket_list_updated', tickets);
         io.emit('play_sound_signal', 'new_ticket');
         socket.emit('ticket_created_success', newTicket.id);
@@ -106,7 +107,6 @@ io.on('connection', (socket) => {
 
         if (idx !== -1) {
             if (!tickets[idx].chat) tickets[idx].chat = [];
-
             const nuevoMensaje = {
                 remitente,
                 texto,
@@ -152,7 +152,6 @@ io.on('connection', (socket) => {
                 atendidoPor: ticketInfo.atendidoPor,
                 categoria: ticketInfo.categoria
             });
-            
             tickets = tickets.filter(t => t.id !== ticketId);
             writeTickets(tickets);
             io.emit('ticket_list_updated', tickets);
@@ -162,7 +161,6 @@ io.on('connection', (socket) => {
                 tickets[idx].estado = nuevoEstado;
                 if(logMessage) tickets[idx].logs.push(`[${new Date().toLocaleString()}] ${logMessage}`);
                 writeTickets(tickets);
-
                 io.to(ticketId).emit('status_changed', { estado: nuevoEstado });
                 io.emit('ticket_list_updated', tickets);
             }
@@ -171,11 +169,9 @@ io.on('connection', (socket) => {
 
     socket.on('submit_rating', (ratingData) => {
         saveRating(ratingData);
-        console.log(`⭐ Calificación procesada para ${ratingData.staff}: ${ratingData.estrellas} estrellas.`);
     });
 });
 
-// 🔥 CONFIGURACIÓN DE ESCUCHA GLOBAL EN INTERNET
 httpServer.listen(PORT, '0.0.0.0', () => {
-    console.log(`🚀 ¡SISTEMA EN VIVO EN INTERNET! Corriendo en el puerto ${PORT}`);
+    console.log(`🚀 ¡SISTEMA EN VIVO! Puerto: ${PORT}`);
 });
