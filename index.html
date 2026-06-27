@@ -2,127 +2,99 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Centro de Soporte - Sistema de Tickets</title>
-    <link rel="stylesheet" href="css/style.css">
-    <style>
-        body { display: block; max-width: 1200px; margin: 0 auto; padding: 40px 20px; }
-        .grid-usuario { display: grid; grid-template-columns: 1fr 1.2fr; gap: 30px; margin-top: 30px; }
-        .chat-container { display: flex; flex-direction: column; height: 300px; background: var(--bg-principal); border: 1px solid #1a2744; border-radius: var(--borde-radio); padding: 15px; margin-bottom: 15px; }
-        .chat-messages { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; padding-right: 5px; }
-        .msg { padding: 10px 14px; border-radius: 10px; max-width: 80%; font-size: 14px; line-height: 1.4; }
-        .msg.Usuario { background: #1a243c; align-self: flex-end; color: #fff; }
-        .msg.Staff { background: var(--azul-degradado); align-self: flex-start; color: #fff; font-weight: 500; }
-        .msg-meta { font-size: 10px; color: rgba(255,255,255,0.5); margin-top: 4px; display: block; text-align: right; }
-        .scroll-lista { max-height: 500px; overflow-y: auto; }
-        .modal-login { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(4, 7, 13, 0.85); backdrop-filter: blur(5px); z-index: 9999; justify-content: center; align-items: center; }
-        .modal-contenido { background: #0d1527; border: 1px solid #1a2744; padding: 30px; border-radius: var(--borde-radio); width: 100%; max-width: 400px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-        
-        /* Estilos del sistema de estrellas */
-        .estrellas-box { display: flex; justify-content: center; gap: 10px; margin: 20px 0; }
-        .star { font-size: 32px; cursor: pointer; color: #203156; transition: 0.2s; }
-        .star.active { color: #ffb020; text-shadow: 0 0 10px rgba(255,176,32,0.4); }
-    </style>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Centro de Tickets & Soporte</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="/socket.io/socket.io.js"></script>
 </head>
 <body>
-    
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-        <h1 style="font-size: 28px; font-weight: 800; letter-spacing: -1px; margin: 0;">🎫 Centro de Tickets & Soporte</h1>
-        <button class="btn" style="width: auto; background: #14203a; border: 1px solid #1a2744; padding: 10px 20px;" onclick="abrirModalStaff()">Panel Staff</button>
-    </div>
 
-    <div class="grid-usuario">
-        <div>
-            <div class="container" style="max-width: 100%;">
-                <h2>Abrir un Nuevo Ticket</h2>
-                <div id="step-1" class="step">
-                    <label>Paso 1: ¿Cuál es el tema de tu ticket?</label>
-                    <select id="categoria">
-                        <option value="Reportes a staff o miembros">Reportes a staff o miembros</option>
-                        <option value="Soporte General">Soporte General</option>
-                        <option value="Alianzas">Alianzas</option>
-                        <option value="Reclamar beneficios boost">Reclamar beneficios boost</option>
-                    </select>
-                    <button class="btn" onclick="nextStep(2)">Siguiente</button>
-                </div>
-                <div id="step-2" class="step hidden">
-                    <label>Paso 2: ¿Problema de tu ticket?</label>
-                    <textarea id="descripcion" rows="4" placeholder="Escribe libremente aquí tu problema o situación..."></textarea>
-                    <button class="btn" onclick="nextStep(3)">Siguiente</button>
-                </div>
-                <div id="step-3" class="step hidden">
-                    <label>Paso 3: Urgencia de tu ticket</label>
-                    <select id="urgencia">
-                        <option value="Leve">Leve</option>
-                        <option value="Moderado">Moderado</option>
-                        <option value="Urgente">Urgente</option>
-                    </select>
-                    <button class="btn" onclick="enviarTicket()">Enviar Ticket</button>
-                </div>
-                <div id="success-msg" class="hidden">
-                    <h3 style="color: var(--azul-premium); text-align:center;">✓ ¡Ticket enviado!</h3>
-                    <button class="btn" style="margin-top:15px;" onclick="resetFormulario()">Abrir otro ticket</button>
+    <div class="container">
+        <h1>Centro de Tickets & Soporte</h1>
+        
+        <div class="layout">
+            <div class="card">
+                <h2>Crear un Nuevo Ticket</h2>
+                <form id="ticketForm">
+                    <div class="form-group">
+                        <label for="categoria">¿Cuál es el tema de tu ticket?</label>
+                        <select id="categoria" required>
+                            <option value="Soporte Técnico">Soporte Técnico</option>
+                            <option value="Reportes a staff o miembros">Reportes a staff o miembros</option>
+                            <option value="Dudas / Preguntas">Dudas / Preguntas</option>
+                            <option value="Apelaciones">Apelaciones</option>
+                            <option value="Otros">Otros</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="urgencia">Urgencia de tu ticket</label>
+                        <select id="urgencia" required>
+                            <option value="Leve">Leve</option>
+                            <option value="Moderado">Moderado</option>
+                            <option value="Urgente">Urgente</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="descripcion">Describe detalladamente tu problema o situación</label>
+                        <textarea id="descripcion" placeholder="Escribe libremente aquí tu problema o situación..." rows="5" required></textarea>
+                    </div>
+
+                    <button type="submit" class="btn">Enviar Ticket</button>
+                </form>
+                
+                <div id="successMessage" class="success-box" style="display: none;">
+                    ✓ ¡Ticket enviado con éxito!
                 </div>
             </div>
-        </div>
 
-        <div>
-            <div class="container" style="max-width: 100%;">
+            <div class="card">
                 <h2>Mis Tickets Activos</h2>
-                <div id="mis-tickets" class="scroll-lista" style="margin-bottom: 25px;"></div>
-                <div id="chat-ticket-box" style="display: none; border-top: 1px solid #1a2744; padding-top: 20px;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                        <h3 id="chat-titulo" style="color: var(--azul-premium); font-size: 16px;">Chat en Vivo</h3>
-                        <span id="chat-estado" class="tag"></span>
-                    </div>
-                    <div class="chat-container">
-                        <div id="chat-messages" class="chat-messages"></div>
-                    </div>
-                    <div id="chat-input-area" style="display: flex; gap: 10px;">
-                        <textarea id="user-msg-input" rows="1" placeholder="Escribe al Staff..." style="margin-bottom:0; padding:12px;"></textarea>
-                        <button class="btn" style="width: auto; padding: 0 20px;" onclick="enviarMensajeChat()">Enviar</button>
-                    </div>
+                <div id="ticketsContainer" class="tickets-list">
+                    <p class="no-tickets">No tienes ningún ticket activo en este momento.</p>
                 </div>
             </div>
         </div>
-    </div>
 
-    <div id="modal-staff" class="modal-login">
-        <div class="modal-contenido">
-            <h3 style="margin-top:0; margin-bottom:10px; font-size:18px;">🛡️ Verificación de Staff</h3>
-            <p style="color:var(--texto-mutated); font-size:13px; margin-bottom:15px;">Ingresa tus datos de acceso rápido.</p>
-            <label>Tu Nombre / Rango</label>
-            <input type="text" id="staff-name-input" placeholder="Ej: Carlos (Admin)" style="margin-bottom:12px; width:100%; box-sizing:border-box;">
-            <label>Contraseña de Administrador</label>
-            <input type="password" id="staff-pass-input" placeholder="••••••••" style="margin-bottom:15px; width:100%; box-sizing:border-box;">
-            <div id="staff-error-msg" style="color:#ff4d4d; font-size:13px; font-weight:700; margin-bottom:15px; display:none;">❌ Acceso Denegado: Contraseña Incorrecta.</div>
-            <div style="display:flex; gap:10px;">
-                <button class="btn" style="background:#14203a; border:1px solid #1a2744;" onclick="cerrarModalStaff()">Cancelar</button>
-                <button class="btn" onclick="verificarClaveStaff()">Entrar</button>
+        <div id="chatModal" class="modal" style="display: none;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 id="chatTitle">Chat del Ticket</h3>
+                    <button id="closeChatBtn" class="close-btn">&times;</button>
+                </div>
+                <div id="chatMessages" class="chat-messages">
+                    </div>
+                <div id="typingIndicator" class="typing-indicator" style="display: none;">
+                    El Staff está escribiendo...
+                </div>
+                <div class="chat-input-area">
+                    <input type="text" id="messageInput" placeholder="Escribe un mensaje aquí..." autocomplete="off">
+                    <button id="sendMessageBtn" class="btn-send">Enviar</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="ratingModal" class="modal" style="display: none;">
+            <div class="modal-content rating-box">
+                <h3>¡Tu ticket ha sido solucionado!</h3>
+                <p>Por favor, califica la atención recibida por parte del miembro del Staff:</p>
+                <h4 id="staffNameRating" style="color: #4361ee;">Staff</h4>
+                
+                <div class="stars" id="starsContainer">
+                    <span class="star" data-value="1">&#9733;</span>
+                    <span class="star" data-value="2">&#9733;</span>
+                    <span class="star" data-value="3">&#9733;</span>
+                    <span class="star" data-value="4">&#9733;</span>
+                    <span class="star" data-value="5">&#9733;</span>
+                </div>
+                <button id="submitRatingBtn" class="btn" style="margin-top: 15px;">Enviar Calificación</button>
             </div>
         </div>
     </div>
 
-    <div id="modal-calificacion" class="modal-login">
-        <div class="modal-contenido" style="text-align: center;">
-            <h3 style="margin-top:0; color: var(--azul-premium);">⭐ ¡Ticket Finalizado!</h3>
-            <p style="color:var(--texto-mutated); font-size:13px;">Tu problema fue atendido. Ayúdanos a mejorar calificando el servicio prestado por el Staff.</p>
-            
-            <p style="margin-top: 15px; font-weight: 700; font-size: 14px;">Staff Encargado: <span id="calif-staff-name" style="color:#fff;">-</span></p>
+    <audio id="soundNewMessage" src="https://assets.mixkit.co/active_storage/sfx/2357/2357-84.wav" preload="auto"></audio>
 
-            <div class="estrellas-box">
-                <span class="star" onclick="marcarEstrellas(1)">★</span>
-                <span class="star" onclick="marcarEstrellas(2)">★</span>
-                <span class="star" onclick="marcarEstrellas(3)">★</span>
-                <span class="star" onclick="marcarEstrellas(4)">★</span>
-                <span class="star" onclick="marcarEstrellas(5)">★</span>
-            </div>
-
-            <button class="btn" onclick="enviarCalificacionFinal()">Enviar Valoración</button>
-        </div>
-    </div>
-
-    <audio id="sound-ping" src="https://assets.mixkit.co/active_storage/sfx/2357/2357-84.wav" preload="auto"></audio>
-    <script src="/socket.io/socket.io.js"></script>
-    <script src="js/user.js"></script>
+    <script src="user.js"></script>
 </body>
 </html>
