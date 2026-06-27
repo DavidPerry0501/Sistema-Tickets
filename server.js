@@ -9,18 +9,18 @@ const app = express();
 const httpServer = createServer(app);
 const io = new Server(httpServer);
 
-// 🌐 CONFIGURACIÓN DEL PUERTO AUTOMÁTICO PARA RAILWAY
-const PORT = process.env.PORT || 3000;
+// 🌐 CONFIGURACIÓN DEL PUERTO AUTOMÁTICO PARA RAILWAY (USA EL QUE CONFIGURASTE)
+const PORT = process.env.PORT || 8080;
 
-// 🔄 ENRUTAMIENTO DINÁMICO ABSOLUTO PARA EVITAR ERRORES EN LA NUBE
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
+// 🔄 ENRUTAMIENTO DINÁMICO ABSOLUTO CORREGIDO
+const __dirname = path.resolve();
 const DATA_DIR = path.join(__dirname, 'data'); 
 const DATA_FILE = path.join(DATA_DIR, 'tickets.json');
 const RATING_FILE = path.join(DATA_DIR, 'calificaciones.json');
 
 app.use(express.json());
 
-// 📁 ASEGURAR QUE LA CARPETA 'data' EXISTA DENTRO DEL PROYECTO
+// Asegurar que la carpeta data exista
 if (!fs.existsSync(DATA_DIR)) {
     fs.mkdirSync(DATA_DIR, { recursive: true });
 }
@@ -37,12 +37,14 @@ app.get('/admin.html', (req, res, next) => {
     }
 });
 
-// 🖥️ SERVIR LA CARPETA PÚBLICA USANDO LA RUTA ABSOLUTA
-app.use(express.static(path.join(__dirname, 'public')));
-// Redirigir automáticamente a los usuarios al index si entran al link limpio
-app.get/('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
-    });
+// 🖥️ FORZAR LA RUTA ABSOLUTA DE LA CARPETA PUBLIC
+const PUBLIC_PATH = path.join(__dirname, 'public');
+app.use(express.static(PUBLIC_PATH));
+
+// Redirección manual garantizada para la raíz del enlace
+app.get('/', (req, res) => {
+    res.sendFile(path.join(PUBLIC_PATH, 'index.html'));
+});
 
 // Funciones de lectura y escritura seguras
 const readTickets = () => {
@@ -173,7 +175,7 @@ io.on('connection', (socket) => {
     });
 });
 
-// 🔥 CONFIGURACIÓN DE ESCUCHA GLOBAL EN INTERNET ('0.0.0.0')
+// 🔥 CONFIGURACIÓN DE ESCUCHA GLOBAL EN INTERNET
 httpServer.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 ¡SISTEMA EN VIVO EN INTERNET! Corriendo en el puerto ${PORT}`);
 });
