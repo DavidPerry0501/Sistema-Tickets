@@ -27,7 +27,7 @@ if (!fs.existsSync(DATA_DIR)) {
 
 // 🛡️ FILTRO DE SEGURIDAD PARA EL PANEL ADMIN
 app.get('/admin.html', (req, res, next) => {
-    const claveCorrecta = 'TuClaveSecreta123'; // <-- CAMBIA TU CONTRASEÑA AQUÍ
+    const claveCorrecta = 'Staff2026'; // <-- CAMBIA TU CONTRASEÑA AQUÍ
     const claveUsuario = req.query.pass;
 
     if (claveUsuario === claveCorrecta) {
@@ -39,6 +39,10 @@ app.get('/admin.html', (req, res, next) => {
 
 // 🖥️ SERVIR LA CARPETA PÚBLICA USANDO LA RUTA ABSOLUTA
 app.use(express.static(path.join(__dirname, 'public')));
+// Redirigir automáticamente a los usuarios al index si entran al link limpio
+app.get/('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+    });
 
 // Funciones de lectura y escritura seguras
 const readTickets = () => {
