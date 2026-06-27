@@ -3,19 +3,25 @@ import { createServer } from 'http';
 import { Server } from 'socket.io';
 import fs from 'fs';
 import path from 'path';
-import { fileURLToPath } from 'url';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 const app = express();
 const httpServer = createServer(app);
 const io = new Server(httpServer);
+
+// 🌐 CONFIGURACIÓN DE PUERTO PARA INTERNET (RAILWAY)
 const PORT = process.env.PORT || 3000;
-const DATA_FILE = path.join(__dirname, 'data', 'tickets.json');
-const RATING_FILE = path.join(__dirname, 'data', 'calificaciones.json');
+
+// 💾 RUTA ABSOLUTA PARA EL VOLUMEN DE ALMACENAMIENTO PERSISTENTE
+const DATA_DIR = '/app/data'; 
+const DATA_FILE = path.join(DATA_DIR, 'tickets.json');
+const RATING_FILE = path.join(DATA_DIR, 'calificaciones.json');
 
 app.use(express.json());
+
+// 🛡️ CREAR LA CARPETA DE DATOS EN EL DISCO VIRTUAL SI NO EXISTE
+if (!fs.existsSync(DATA_DIR)) {
+    fs.mkdirSync(DATA_DIR, { recursive: true });
+}
 
 // 🛡️ FILTRO DE SEGURIDAD PARA EL PANEL ADMIN
 app.get('/admin.html', (req, res, next) => {
@@ -29,8 +35,10 @@ app.get('/admin.html', (req, res, next) => {
     }
 });
 
+// Servir la carpeta pública con la interfaz web
 app.use(express.static('public'));
 
+// Funciones de lectura y escritura seguras
 const readTickets = () => {
     if (!fs.existsSync(DATA_FILE) || fs.readFileSync(DATA_FILE, 'utf-8').trim() === '') {
         fs.writeFileSync(DATA_FILE, '[]');
@@ -40,7 +48,6 @@ const readTickets = () => {
 
 const writeTickets = (data) => fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
 
-// Función para guardar calificaciones
 const saveRating = (ratingData) => {
     if (!fs.existsSync(RATING_FILE) || fs.readFileSync(RATING_FILE, 'utf-8').trim() === '') {
         fs.writeFileSync(RATING_FILE, '[]');
@@ -53,10 +60,12 @@ const saveRating = (ratingData) => {
     fs.writeFileSync(RATING_FILE, JSON.stringify(ratings, null, 2));
 };
 
+// API Endpoint para cargar tickets
 app.get('/api/tickets', (req, res) => res.json(readTickets()));
 
+// ⚡ LÓGICA DE WEBSOCKETS EN TIEMPO REAL (SOCKET.IO)
 io.on('connection', (socket) => {
-    console.log('⚡ Usuario conectado:', socket.id);
+    console.log('⚡ Usuario conectado mediante WebSockets:', socket.id);
 
     socket.on('join_ticket', (ticketId) => {
         socket.join(ticketId);
@@ -78,7 +87,7 @@ io.on('connection', (socket) => {
         writeTickets(tickets);
 
         io.emit('ticket_list_updated', tickets);
-        io.emit('play_sound_signal', 'new_ticket');
+        io.emit('play_sound_signal', 'new_ticket'); // Alerta sonora global de staff
         socket.emit('ticket_created_success', newTicket.id);
     });
 
@@ -97,6 +106,7 @@ io.on('connection', (socket) => {
             };
             tickets[idx].chat.push(nuevoMensaje);
             
+            // Asignación automática de Staff si el ticket estaba intacto
             if (remitente !== 'Usuario' && tickets[idx].estado === 'Abierto') {
                 tickets[idx].estado = 'Reclamado';
                 tickets[idx].atendidoPor = remitente;
@@ -115,6 +125,7 @@ io.on('connection', (socket) => {
         }
     });
 
+    // Retransmitir estados dinámicos de "Escribiendo..."
     socket.on('send_typing_signal', (data) => {
         const { ticketId, isTyping, origen } = data;
         if (origen === 'Staff') {
@@ -130,7 +141,7 @@ io.on('connection', (socket) => {
         const ticketInfo = tickets.find(t => t.id === ticketId);
 
         if (nuevoEstado === 'Cerrado' && ticketInfo) {
-            // Pasamos los datos del staff asignado antes de removerlo del JSON de activos
+            // Mandar metadatos del staff al usuario antes de borrar el ticket activo
             io.to(ticketId).emit('status_changed', { 
                 estado: 'Cerrado', 
                 atendidoPor: ticketInfo.atendidoPor,
@@ -153,15 +164,14 @@ io.on('connection', (socket) => {
         }
     });
 
-    // Guardar la calificación enviada por el usuario
+    // Evento final del sistema de feedback de estrellas
     socket.on('submit_rating', (ratingData) => {
         saveRating(ratingData);
-        console.log(`⭐ Nueva calificación para ${ratingData.staff}: ${ratingData.estrellas} estrellas.`);
+        console.log(`⭐ Calificación procesada para ${ratingData.staff}: ${ratingData.estrellas} estrellas.`);
     });
 });
 
-app.use(express.static(path.join(__dirname, 'public')));
-
-httpServer.listen(PORT, () => {
-    console.log(`🚀 Servidor escuchando en http://localhost:${PORT}`);
+// 🔥 ESCUCHA INTERNACIONAL OBLIGATORIA EN INTERNET ('0.0.0.0')
+httpServer.listen(PORT, '0.0.0.0', () => {
+    console.log(`🚀 ¡SISTEMA EN VIVO EN INTERNET! Escuchando peticiones en el puerto ${PORT}`);
 });
