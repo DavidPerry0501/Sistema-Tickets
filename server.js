@@ -3,13 +3,17 @@ import { createServer } from 'http';
 import { Server } from 'socket.io';
 import fs from 'fs';
 import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 const httpServer = createServer(app);
 const io = new Server(httpServer);
-const PORT = 3000;
-const DATA_FILE = path.join(process.cwd(), 'data', 'tickets.json');
-const RATING_FILE = path.join(process.cwd(), 'data', 'calificaciones.json');
+const PORT = process.env.PORT || 3000;
+const DATA_FILE = path.join(__dirname, 'data', 'tickets.json');
+const RATING_FILE = path.join(__dirname, 'data', 'calificaciones.json');
 
 app.use(express.json());
 
@@ -156,5 +160,8 @@ io.on('connection', (socket) => {
     });
 });
 
-const PORT = process.env.PORT || 3000;
-httpServer.listen(PORT, '0.0.0.0', () => console.log(`🚀 Sistema Pro en puerto ${PORT}`));
+app.use(express.static(path.join(__dirname, 'public')));
+
+httpServer.listen(PORT, () => {
+    console.log(`🚀 Servidor escuchando en http://localhost:${PORT}`);
+});
