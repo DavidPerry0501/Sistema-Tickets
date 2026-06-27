@@ -1,0 +1,132 @@
+:root {
+    --bg-principal: #080f1d;     /* Fondo ultra oscuro azulado */
+    --bg-tarjeta: #10192d;        /* Color de los botones y paneles */
+    --azul-premium: #2575fc;      /* El azul brillante del botón Discord */
+    --azul-degradado: linear-gradient(135deg, #1a73e8 0%, #2575fc 100%);
+    --texto-blanco: #ffffff;
+    --texto-mutado: #7485a0;
+    --borde-radio: 12px;          /* Esquinas bien redondeadas como tu foto */
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+}
+
+body {
+    background-color: var(--bg-principal);
+    color: var(--texto-blanco);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 20px;
+}
+
+/* Contenedor tipo la tarjeta de Registro Civil de tu imagen */
+.container {
+    background-color: #0c1322;
+    width: 100%;
+    max-width: 450px;
+    padding: 35px;
+    border-radius: 20px;
+    border: 1px solid #16223f;
+    box-shadow: 0 24px 48px rgba(0, 0, 0, 0.6);
+}
+
+h2 {
+    font-size: 24px;
+    font-weight: 700;
+    margin-bottom: 25px;
+    text-align: center;
+    letter-spacing: -0.5px;
+}
+
+label {
+    display: block;
+    font-size: 12px;
+    color: var(--texto-mutado);
+    margin-bottom: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: 600;
+}
+
+/* select, input y textarea estilizados como los botones oscuros */
+select, textarea {
+    width: 100%;
+    padding: 16px;
+    background-color: var(--bg-tarjeta);
+    border: 1px solid #1a2744;
+    border-radius: var(--borde-radio);
+    color: var(--texto-blanco);
+    font-size: 15px;
+    outline: none;
+    margin-bottom: 25px;
+    transition: all 0.2s ease;
+}
+
+select:focus, textarea:focus {
+    border-color: var(--azul-premium);
+    background-color: #14203a;
+}
+
+/* Botón idéntico al "Entrar con Discord" */
+.btn {
+    width: 100%;
+    padding: 16px;
+    background: var(--azul-degradado);
+    border: none;
+    color: var(--texto-blanco);
+    font-size: 15px;
+    font-weight: 600;
+    border-radius: var(--borde-radio);
+    cursor: pointer;
+    transition: transform 0.1s ease, filter 0.2s ease;
+    text-align: center;
+}
+
+.btn:hover {
+    filter: brightness(1.1);
+}
+
+.btn:active {
+    transform: scale(0.98);
+}
+
+/* Sistema de ocultado estricto */
+.hidden {
+    display: none !important;
+}
+
+#success-msg {
+    text-align: center;
+    padding: 20px 0;
+}
+/* Colores para los estados de los tickets */
+.tag {
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    display: inline-block;
+}
+.Abierto { background-color: #ef4444; color: #ffffff; }     /* Rojo */
+.Reclamado { background-color: #f59e0b; color: #ffffff; }   /* Amarillo/Naranja */
+.Cerrado { background-color: #10b981; color: #ffffff; }     /* Verde */
+
+/* Estilo para la caja negra de los Logs */
+.logs-box {
+    margin-top: 15px;
+    font-size: 13px;
+    color: var(--texto-mutado);
+    background-color: #060913;
+    padding: 15px;
+    border-radius: var(--borde-radio);
+    border: 1px solid #1a2744;
+    max-height: 150px;
+    overflow-y: auto;
+}
