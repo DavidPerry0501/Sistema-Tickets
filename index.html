@@ -9,12 +9,13 @@
 </head>
 <body>
 
-    <div class="container">
-        <h1 class="main-title">Centro de Tickets & Soporte</h1>
+    <div class="container" style="max-width: 1200px; width: 95%; margin: 0 auto; padding: 20px; box-sizing: border-box;">
         
-        <div class="main-layout" style="display: flex; gap: 30px; justify-content: space-between; align-items: flex-start; margin-top: 20px;">
+        <h1 class="main-title" style="text-align: center; font-size: 2.5rem; margin-bottom: 30px;">Centro de Tickets & Soporte</h1>
+        
+        <div class="main-layout" style="display: flex; flex-direction: row; gap: 40px; justify-content: center; align-items: flex-start; width: 100%;">
             
-            <div class="card ticket-creation-column" style="flex: 1; min-width: 300px;">
+            <div class="card ticket-creation-column" style="flex: 1; min-width: 320px; box-sizing: border-box;">
                 <h2>Crear un Nuevo Ticket</h2>
                 <form id="ticketForm">
                     <div class="form-group">
@@ -50,7 +51,7 @@
                 </div>
             </div>
 
-            <div class="card ticket-list-column" style="flex: 1; min-width: 300px;">
+            <div class="card ticket-list-column" style="flex: 1; min-width: 320px; box-sizing: border-box;">
                 <h2>Mis Tickets Activos</h2>
                 <div id="ticketsContainer" class="tickets-list">
                     <p class="no-tickets">No tienes ningún ticket activo en este momento.</p>
