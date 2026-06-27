@@ -9,14 +9,14 @@ const app = express();
 const httpServer = createServer(app);
 const io = new Server(httpServer);
 
-// 🌐 CONFIGURACIÓN DEL PUERTO AUTOMÁTICO PARA RAILWAY
+// 🌐 EL PUERTO SE ADAPTA AUTOMÁTICAMENTE A RENDER
 const PORT = process.env.PORT || 8080;
 
-// 🔍 ENCONTRAR LA RUTA REAL (RAÍZ PRINCIPAL)
+// 🔍 ENCONTRAR LA RUTA REAL (RAÍZ PRINCIPAL DONDE ESTÁN TUS ARCHIVOS)
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Las carpetas de datos se crean de forma independiente
+// Directorio para guardar los tickets
 const DATA_DIR = path.join(__dirname, 'data'); 
 const DATA_FILE = path.join(DATA_DIR, 'tickets.json');
 const RATING_FILE = path.join(DATA_DIR, 'calificaciones.json');
@@ -39,15 +39,15 @@ app.get('/admin.html', (req, res, next) => {
     }
 });
 
-// 🖥️ SERVIR ARCHIVOS DIRECTAMENTE DESDE LA RAÍZ (YA QUE NO HAY CARPETA PUBLIC)
+// 🖥️ LEER ESTILOS Y SCRIPTS DIRECTAMENTE DESDE LA RAÍZ REAL
 app.use(express.static(__dirname));
 
-// Forzar la entrega de index.html cuando entren al link limpio
+// Forzar la entrega de index.html en la raíz del enlace
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-// Funciones de base de datos seguras
+// Funciones de base de datos en JSON
 const readTickets = () => {
     if (!fs.existsSync(DATA_FILE) || fs.readFileSync(DATA_FILE, 'utf-8').trim() === '') {
         fs.writeFileSync(DATA_FILE, '[]');
@@ -163,7 +163,7 @@ io.on('connection', (socket) => {
     });
 });
 
-// 🔥 ENTRADA INTERNACIONAL GLOBAL
+// 🔥 CONEXIÓN ABIERTA PARA EL HOSTING EN REDER
 httpServer.listen(PORT, '0.0.0.0', () => {
-    console.log(`🚀 ¡SISTEMA EN VIVO! Corriendo exitosamente en el puerto ${PORT}`);
+    console.log(`🚀 ¡SISTEMA EN VIVO EN RENDER! Corriendo en el puerto ${PORT}`);
 });
