@@ -3,29 +3,31 @@ import { createServer } from 'http';
 import { Server } from 'socket.io';
 import fs from 'fs';
 import path from 'path';
+import { fileURLToPath } from 'url';
 
 const app = express();
 const httpServer = createServer(app);
 const io = new Server(httpServer);
 
-// 🌐 CONFIGURACIÓN DE PUERTO PARA INTERNET (RAILWAY)
+// 🌐 CONFIGURACIÓN DEL PUERTO AUTOMÁTICO PARA RAILWAY
 const PORT = process.env.PORT || 3000;
 
-// 💾 RUTA ABSOLUTA PARA EL VOLUMEN DE ALMACENAMIENTO PERSISTENTE
-const DATA_DIR = '/app/data'; 
+// 🔄 ENRUTAMIENTO DINÁMICO ABSOLUTO PARA EVITAR ERRORES EN LA NUBE
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const DATA_DIR = path.join(__dirname, 'data'); 
 const DATA_FILE = path.join(DATA_DIR, 'tickets.json');
 const RATING_FILE = path.join(DATA_DIR, 'calificaciones.json');
 
 app.use(express.json());
 
-// 🛡️ CREAR LA CARPETA DE DATOS EN EL DISCO VIRTUAL SI NO EXISTE
+// 📁 ASEGURAR QUE LA CARPETA 'data' EXISTA DENTRO DEL PROYECTO
 if (!fs.existsSync(DATA_DIR)) {
     fs.mkdirSync(DATA_DIR, { recursive: true });
 }
 
 // 🛡️ FILTRO DE SEGURIDAD PARA EL PANEL ADMIN
 app.get('/admin.html', (req, res, next) => {
-    const claveCorrecta = 'Staff2026'; // <-- CAMBIA TU CONTRASEÑA AQUÍ
+    const claveCorrecta = 'TuClaveSecreta123'; // <-- CAMBIA TU CONTRASEÑA AQUÍ
     const claveUsuario = req.query.pass;
 
     if (claveUsuario === claveCorrecta) {
@@ -35,8 +37,8 @@ app.get('/admin.html', (req, res, next) => {
     }
 });
 
-// Servir la carpeta pública con la interfaz web
-app.use(express.static('public'));
+// 🖥️ SERVIR LA CARPETA PÚBLICA USANDO LA RUTA ABSOLUTA
+app.use(express.static(path.join(__dirname, 'public')));
 
 // Funciones de lectura y escritura seguras
 const readTickets = () => {
@@ -60,10 +62,10 @@ const saveRating = (ratingData) => {
     fs.writeFileSync(RATING_FILE, JSON.stringify(ratings, null, 2));
 };
 
-// API Endpoint para cargar tickets
+// API Endpoint para cargar los tickets activos
 app.get('/api/tickets', (req, res) => res.json(readTickets()));
 
-// ⚡ LÓGICA DE WEBSOCKETS EN TIEMPO REAL (SOCKET.IO)
+// ⚡ SISTEMA DE WEBSOCKETS EN TIEMPO REAL (SOCKET.IO)
 io.on('connection', (socket) => {
     console.log('⚡ Usuario conectado mediante WebSockets:', socket.id);
 
@@ -87,7 +89,7 @@ io.on('connection', (socket) => {
         writeTickets(tickets);
 
         io.emit('ticket_list_updated', tickets);
-        io.emit('play_sound_signal', 'new_ticket'); // Alerta sonora global de staff
+        io.emit('play_sound_signal', 'new_ticket');
         socket.emit('ticket_created_success', newTicket.id);
     });
 
@@ -106,7 +108,6 @@ io.on('connection', (socket) => {
             };
             tickets[idx].chat.push(nuevoMensaje);
             
-            // Asignación automática de Staff si el ticket estaba intacto
             if (remitente !== 'Usuario' && tickets[idx].estado === 'Abierto') {
                 tickets[idx].estado = 'Reclamado';
                 tickets[idx].atendidoPor = remitente;
@@ -125,7 +126,6 @@ io.on('connection', (socket) => {
         }
     });
 
-    // Retransmitir estados dinámicos de "Escribiendo..."
     socket.on('send_typing_signal', (data) => {
         const { ticketId, isTyping, origen } = data;
         if (origen === 'Staff') {
@@ -141,7 +141,6 @@ io.on('connection', (socket) => {
         const ticketInfo = tickets.find(t => t.id === ticketId);
 
         if (nuevoEstado === 'Cerrado' && ticketInfo) {
-            // Mandar metadatos del staff al usuario antes de borrar el ticket activo
             io.to(ticketId).emit('status_changed', { 
                 estado: 'Cerrado', 
                 atendidoPor: ticketInfo.atendidoPor,
@@ -164,14 +163,13 @@ io.on('connection', (socket) => {
         }
     });
 
-    // Evento final del sistema de feedback de estrellas
     socket.on('submit_rating', (ratingData) => {
         saveRating(ratingData);
         console.log(`⭐ Calificación procesada para ${ratingData.staff}: ${ratingData.estrellas} estrellas.`);
     });
 });
 
-// 🔥 ESCUCHA INTERNACIONAL OBLIGATORIA EN INTERNET ('0.0.0.0')
+// 🔥 CONFIGURACIÓN DE ESCUCHA GLOBAL EN INTERNET ('0.0.0.0')
 httpServer.listen(PORT, '0.0.0.0', () => {
-    console.log(`🚀 ¡SISTEMA EN VIVO EN INTERNET! Escuchando peticiones en el puerto ${PORT}`);
+    console.log(`🚀 ¡SISTEMA EN VIVO EN INTERNET! Corriendo en el puerto ${PORT}`);
 });
